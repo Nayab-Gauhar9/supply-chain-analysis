@@ -1,0 +1,13 @@
+countries:
+  - name: India
+    code: 699
+  - name: France
+    code: 251
+  - name: Russia
+    code: 643
+  - name: United Kingdom
+    code: 826
+  - name: United States
+    code: 840
+  - name: China
+    code: 156

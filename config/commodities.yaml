@@ -1,0 +1,21 @@
+commodities:
+  - name: crude_petroleum
+    hs_code: "2709"
+  - name: refined_petroleum
+    hs_code: "2710"
+  - name: natural_gas
+    hs_code: "2711"
+  - name: coal
+    hs_code: "2701"
+  - name: iron_ore
+    hs_code: "2601"
+  - name: copper
+    hs_code: "7403"
+  - name: aluminium
+    hs_code: "7601"
+  - name: integrated_circuits
+    hs_code: "8542"
+  - name: wheat
+    hs_code: "1001"
+  - name: medicaments
+    hs_code: "3004" 

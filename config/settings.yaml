@@ -1,0 +1,31 @@
+api:
+  base_url: "https://comtradeapi.un.org/data/v1/get/C/A/HS"
+  timeout_seconds: 30
+  max_retries: 3
+  backoff_factor: 2
+  rate_limit_per_second: 1
+
+extraction:
+  type_code: "C"
+  frequency_code: "A"
+  include_descriptions: false
+
+  # Number of API requests that can be processed concurrently
+  max_concurrent_requests: 5
+
+database:
+  table_name: "trade_data"
+
+storage:
+  raw_response_enabled: true
+  format: "json"
+
+observability:
+  log_level: "INFO"
+  metrics_enabled: true
+  request_logging_enabled: true
+
+pipeline:
+  batch_size: 500
+  enable_idempotency: true
+  enable_resume: true
