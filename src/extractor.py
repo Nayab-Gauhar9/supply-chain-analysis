@@ -1,9 +1,10 @@
 import logging
 from .config_loader import load_commodities, load_countries, load_settings
 from .api_client import get_data
-from .object_storage import upload_json
+from .object_storage import upload_json, get_bucket_name
 from dotenv import load_dotenv
 import os
+from .database.source_objects import register_source_object
 
 logger = logging.getLogger(__name__)
 
@@ -178,11 +179,18 @@ def run_extraction(flows, commodities, period):
                 raw_object,
                 object_name
             )
+            source_object_id = register_source_object(
+                bucket_name=get_bucket_name(),
+                object_key=object_name,
+                file_name=object_name.rsplit("/", 1)[-1],
+            )
 
             results.append({
                 "reporter": reporter,
                 "partner": partner,
                 "direction": direction,
+                "source_object_id": source_object_id,
+                "object_key": object_name,
                 "data": data
             })
         except Exception as e:
@@ -210,7 +218,7 @@ if __name__ == "__main__":
 
     commodity_names = [commodity["name"] for commodity in commodities]
 
-    years = ["2022","2024"]
+    years = ["2023","2024"]
 
     total_extractions = 0
     all_failures = []

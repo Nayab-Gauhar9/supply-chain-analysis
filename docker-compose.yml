@@ -1,0 +1,62 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: supply_chain_postgres
+    environment:
+      POSTGRES_DB: supply_chain
+      POSTGRES_USER: supply_chain_user
+      POSTGRES_PASSWORD: supply_chain_password
+    ports:
+      - "5434:5432"
+    volumes:
+      - supply_chain_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supply_chain_user -d supply_chain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: supply_chain_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: supply_chain_minio
+      MINIO_ROOT_PASSWORD: supply_chain_minio_password
+    ports:
+      - "9003:9000"
+      - "9004:9001"
+    volumes:
+      - supply_chain_minio_data:/data
+
+  etl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supply_chain_etl
+    environment:
+      DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: supply_chain_minio
+      MINIO_SECRET_KEY: supply_chain_minio_password
+      MINIO_BUCKET_NAME: supply-chain-raw
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supply_chain_migrate
+    environment:
+      DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["python", "-m", "src.database.migration_runner"]
+
+volumes:
+  supply_chain_postgres_data:
+  supply_chain_minio_data:

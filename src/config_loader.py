@@ -39,6 +39,14 @@ def load_commodities():
 def load_settings():
     return load_config("settings.yaml")
 
+def load_transport_modes():
+    data = load_config("transport_modes.yaml")
+    return data["transport_modes"]
+
+def load_datasets():
+    data = load_config("datasets.yaml")
+    return data["datasets"]
+
 if __name__=="__main__":
-    c = load_countries()
+    c = load_transport_modes()
     print(c)

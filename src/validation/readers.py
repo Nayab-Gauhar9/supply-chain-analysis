@@ -50,12 +50,12 @@ def read_records(object_name):
         logger.error(
             "Invalid root structure: object=%s expected=dict got=%s",
             object_name,
-            type(data).name,
+            type(data).__name__,
         )
 
         raise RecordValidationError(
             f"Expected root JSON object to be a dict, "
-            f"got {type(data).name}: {object_name}"
+            f"got {type(data).__name__}: {object_name}"
         )
 
     response = data.get("response")
@@ -64,7 +64,7 @@ def read_records(object_name):
         logger.error(
             "Invalid response structure: object=%s expected=dict got=%s",
             object_name,
-            type(response).name,
+            type(response).__name__,
         )
 
         raise RecordValidationError(
@@ -77,12 +77,12 @@ def read_records(object_name):
         logger.error(
             "Invalid records structure: object=%s expected=list got=%s",
             object_name,
-            type(records).name,
+            type(records).__name__,
         )
 
         raise RecordValidationError(
             f"Expected response data to be a list, "
-            f"got {type(records).name}: {object_name}"
+            f"got {type(records).__name__}: {object_name}"
         )
 
     logger.info(
@@ -130,11 +130,11 @@ def read_yearly_records(file_name, start_year, end_year):
                 len(records),
             )
 
-        except Exception as e:
+        except SourceNotFoundError as e:
             missing_years.append(year)
 
             logger.warning(
-                "Year could not be processed: year=%s object=%s error=%s",
+                "Source object missing: year=%s object=%s error=%s",
                 year,
                 object_name,
                 str(e),

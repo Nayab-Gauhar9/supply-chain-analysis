@@ -7,7 +7,5 @@ countries:
     code: 643
   - name: United Kingdom
     code: 826
-  - name: United States
-    code: 840
   - name: China
     code: 156

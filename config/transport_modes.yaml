@@ -1,0 +1,24 @@
+transport_modes:
+  - mot_code: 0
+    mot_name: "Total modes of transport"
+
+  - mot_code: 1000
+    mot_name: "Air"
+
+  - mot_code: 2100
+    mot_name: "Sea"
+
+  - mot_code: 3100
+    mot_name: "Railway"
+
+  - mot_code: 3200
+    mot_name: "Road"
+
+  - mot_code: 9000
+    mot_name: "Not elsewhere classified"
+
+  - mot_code: 9200
+    mot_name: "Postal consignments, mail or courier shipment"
+
+  - mot_code: 9900
+    mot_name: "Other"

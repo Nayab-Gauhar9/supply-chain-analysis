@@ -29,3 +29,5 @@ pipeline:
   batch_size: 500
   enable_idempotency: true
   enable_resume: true
+  start_year: 2020
+  end_year: 2025

@@ -136,3 +136,6 @@ def download_json(object_name):
         raise StorageError(
             f"Failed to download JSON object: {object_name}"
         ) from e
+
+def get_bucket_name():
+    return BUCKET_NAME

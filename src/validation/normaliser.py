@@ -14,10 +14,15 @@ def normalize_record(record):
 
     normalized = {
         "year": record.get("refYear"),
+        "reporter_code": record.get("reporterCode"),
         "flow_code": record.get("flowCode"),
         "partner_code": record.get("partnerCode"),
         "commodity_code": record.get("cmdCode"),
+        "mot_code": record.get("motCode"),
+        "qty": record.get("qty"),
         "primary_value": record.get("primaryValue"),
+        "is_reported": record.get("isReported"),
+        "is_aggregate": record.get("isAggregate"),
     }
 
     logger.debug(
@@ -76,5 +81,5 @@ if __name__ == "__main__":
 
         print("\nNORMALIZED RECORDS:")
         print(len(normalized_records))
-        print("\nFIRST NORMALIZED RECORD:")
-        print(normalized_records[0])
+        for record in normalized_records[:5]:
+            print(record)
