@@ -14,6 +14,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+    MINIO_ENDPOINT: http://127.0.0.1:9000
+    MINIO_ACCESS_KEY: test-access-key
+    MINIO_SECRET_KEY: test-secret-key
+    MINIO_BUCKET_NAME: supply-chain-raw
+
     services:
       postgres:
         image: postgres:16-alpine
