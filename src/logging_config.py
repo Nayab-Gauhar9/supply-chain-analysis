@@ -9,4 +9,6 @@ file_handler= logging.FileHandler(LOG_FILE)
 
 formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s")
 file_handler.setFormatter(formatter)
-logging.basicConfig(level=logging.INFO, handlers=[file_handler])
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logging.basicConfig(level=logging.INFO, handlers=[file_handler,console_handler])
