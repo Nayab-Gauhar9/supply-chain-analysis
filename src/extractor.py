@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
     commodity_names = [commodity["name"] for commodity in commodities]
 
-    years = ["2023","2024"]
+    years = ["2020","2021","2022","2023","2024","2025"]
 
     total_extractions = 0
     all_failures = []
