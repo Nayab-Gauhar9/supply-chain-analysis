@@ -112,5 +112,5 @@ jobs:
 
             docker compose -f docker-compose.prod.yml up extractor &&
 
-            docker compose -f docker-compose.prod.yml up etl
-    "
+            docker compose -f docker-compose.prod.yml up etl"
+    
