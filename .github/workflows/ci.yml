@@ -102,12 +102,12 @@ jobs:
             -o StrictHostKeyChecking=no \
             "$EC2_USER@$EC2_HOST" \
             "cd /opt/supply-chain-analysis && \
-             sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|g' docker-compose.prod.yml && \
-             docker compose pull && \
-             docker compose up -d && \
-             docker compose wait migrate && \
-             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)\" = '0' && \
-             docker compose wait extractor && \
-             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)\" = '0' && \
-             docker compose wait etl && \
-             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)\" = '0'"
+            sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|' docker-compose.prod.yml && \
+            docker compose -f docker-compose.prod.yml pull && \
+            docker compose -f docker-compose.prod.yml up -d && \
+            docker compose -f docker-compose.prod.yml wait migrate && \
+            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)\" = '0' && \
+            docker compose -f docker-compose.prod.yml wait extractor && \
+            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)\" = '0' && \
+            docker compose -f docker-compose.prod.yml wait etl && \
+            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)\" = '0'"
