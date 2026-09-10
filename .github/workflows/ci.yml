@@ -101,27 +101,16 @@ jobs:
           ssh -i ec2_key \
             -o StrictHostKeyChecking=no \
             "$EC2_USER@$EC2_HOST" \
-            "cd /opt/supply-chain-analysis && \
-            sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|' docker-compose.prod.yml && \
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            "
+            cd /opt/supply-chain-analysis &&
 
-            # Wait for migrate to finish
-            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_migrate)" != "exited" ]; do
-              sleep 5
-            done
-            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)" = "0"
+            sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|' docker-compose.prod.yml &&
 
-            # Wait for extractor to finish
-            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_extractor)" != "exited" ]; do
-              sleep 5
-            done
-            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)" = "0"
+            docker compose -f docker-compose.prod.yml pull &&
 
-            # Wait for ETL to finish
-            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_etl)" != "exited" ]; do
-              sleep 5
-            done
-            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)" = "0"
+            docker compose -f docker-compose.prod.yml up migrate &&
 
-            docker compose -f docker-compose.prod.yml ps -a
+            docker compose -f docker-compose.prod.yml up extractor &&
+
+            docker compose -f docker-compose.prod.yml up etl
+    "
