@@ -103,11 +103,25 @@ jobs:
             "$EC2_USER@$EC2_HOST" \
             "cd /opt/supply-chain-analysis && \
             sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|' docker-compose.prod.yml && \
-            docker compose -f docker-compose.prod.yml pull && \
-            docker compose -f docker-compose.prod.yml up -d && \
-            docker compose -f docker-compose.prod.yml wait migrate && \
-            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)\" = '0' && \
-            docker compose -f docker-compose.prod.yml wait extractor && \
-            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)\" = '0' && \
-            docker compose -f docker-compose.prod.yml wait etl && \
-            test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)\" = '0'"
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Wait for migrate to finish
+            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_migrate)" != "exited" ]; do
+              sleep 5
+            done
+            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)" = "0"
+
+            # Wait for extractor to finish
+            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_extractor)" != "exited" ]; do
+              sleep 5
+            done
+            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)" = "0"
+
+            # Wait for ETL to finish
+            while [ "$(docker inspect -f '{{.State.Status}}' supply_chain_etl)" != "exited" ]; do
+              sleep 5
+            done
+            test "$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)" = "0"
+
+            docker compose -f docker-compose.prod.yml ps -a
