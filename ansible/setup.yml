@@ -83,6 +83,37 @@
                 timeout: 5s
                 retries: 5
 
+            postgres-exporter:
+              image: prometheuscommunity/postgres-exporter:latest
+              container_name: supply_chain_postgres_exporter
+              environment:
+                DATA_SOURCE_NAME: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain?sslmode=disable
+              depends_on:
+                postgres:
+                  condition: service_healthy
+
+            prometheus:
+              image: prom/prometheus:latest
+              container_name: supply_chain_prometheus
+              volumes:
+                - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+              ports:
+                - "9090:9090"
+              depends_on:
+                postgres-exporter:
+                  condition: service_started
+
+            grafana:
+              image: grafana/grafana:latest
+              container_name: supply_chain_grafana
+              ports:
+                - "3000:3000"
+              volumes:
+                - supply_chain_grafana_data:/var/lib/grafana
+              depends_on:
+                prometheus:
+                  condition: service_started
+
             migrate:
               image: nayabgauhar9/supply-chain-analysis:{{image_tag}}
               container_name: supply_chain_migrate
@@ -120,3 +151,4 @@
 
           volumes:
             supply_chain_postgres_data:
+            supply_chain_grafana_data:
