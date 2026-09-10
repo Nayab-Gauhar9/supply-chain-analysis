@@ -1,0 +1,122 @@
+---
+- name: Configure Supply Chain ETL server
+  hosts: etl_server
+  become: true
+
+  tasks:
+    - name: Update apt package index
+      apt:
+        update_cache: true
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Ensure Docker is Running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Install Docker Compose Plugin
+      apt:
+        name: docker-compose-v2
+        state: present
+
+    - name: Install Git
+      apt:
+        name: git
+        state: present
+
+    - name: Create application directory
+      file:
+        path: /opt/supply-chain-analysis
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Clone application repository
+      git:
+        repo: https://github.com/Nayab-Gauhar9/supply-chain-analysis.git
+        dest: /opt/supply-chain-analysis
+        version: dev
+
+    - name: Set application directory ownership
+      file:
+        path: /opt/supply-chain-analysis
+        owner: ubuntu
+        group: ubuntu
+        recurse: true
+
+    - name: Create production environment file
+      ansible.builtin.copy:
+        dest: /opt/supply-chain-analysis/.env.prod
+        owner: ubuntu
+        group: ubuntu
+        mode: "0600"
+        content: |
+          API_TOKEN={{ api_token }}
+
+    - name: Create production Docker Compose file
+      ansible.builtin.copy:
+        dest: /opt/supply-chain-analysis/docker-compose.prod.yml
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+        content: |
+          services:
+
+            postgres:
+              image: postgres:16-alpine
+              container_name: supply_chain_postgres
+              environment:
+                POSTGRES_DB: supply_chain
+                POSTGRES_USER: supply_chain_user
+                POSTGRES_PASSWORD: supply_chain_password
+              volumes:
+                - supply_chain_postgres_data:/var/lib/postgresql/data
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U supply_chain_user -d supply_chain"]
+                interval: 5s
+                timeout: 5s
+                retries: 5
+
+            migrate:
+              image: nayabgauhar9/supply-chain-analysis:{{image_tag}}
+              container_name: supply_chain_migrate
+              environment:
+                DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain
+              depends_on:
+                postgres:
+                  condition: service_healthy
+              command: ["python", "-m", "src.database.migration_runner"]
+
+            extractor:
+              image: nayabgauhar9/supply-chain-analysis:{{image_tag}}
+              container_name: supply_chain_extractor
+              env_file:
+                - .env.prod
+              environment:
+                DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain
+                MINIO_BUCKET_NAME: supply-chain-analysis-raw-data
+              depends_on:
+                migrate:
+                  condition: service_completed_successfully
+              command: ["python", "-m", "src.extractor"]
+
+
+            etl:
+              image: nayabgauhar9/supply-chain-analysis:{{image_tag}}
+              container_name: supply_chain_etl
+              environment:
+                DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@postgres:5432/supply_chain
+                MINIO_BUCKET_NAME: supply-chain-analysis-raw-data
+              depends_on:
+                extractor:
+                  condition: service_completed_successfully
+
+
+          volumes:
+            supply_chain_postgres_data:

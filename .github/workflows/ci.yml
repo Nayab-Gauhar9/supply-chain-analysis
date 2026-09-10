@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      MINIO_ENDPOINT: http://127.0.0.1:9000
+      MINIO_ACCESS_KEY: test-access-key
+      MINIO_SECRET_KEY: test-secret-key
+      MINIO_BUCKET_NAME: supply-chain-raw
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: supply_chain_user
+          POSTGRES_PASSWORD: supply_chain_password
+          POSTGRES_DB: supply_chain
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U supply_chain_user -d supply_chain"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@127.0.0.1:5432/supply_chain
+        run: |
+          python -m src.database.migration_runner
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://supply_chain_user:supply_chain_password@127.0.0.1:5432/supply_chain
+        run: |
+          pytest -v
+
+  docker-build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/supply-chain-analysis:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/supply-chain-analysis:${{ github.sha }}
+
+  deploy:
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "$EC2_SSH_KEY" > ec2_key
+          chmod 600 ec2_key
+          trap 'rm -f ec2_key' EXIT
+
+          ssh -i ec2_key \
+            -o StrictHostKeyChecking=no \
+            "$EC2_USER@$EC2_HOST" \
+            "cd /opt/supply-chain-analysis && \
+             sed -i 's|image: nayabgauhar9/supply-chain-analysis:.*|image: nayabgauhar9/supply-chain-analysis:${IMAGE_TAG}|g' docker-compose.prod.yml && \
+             docker compose pull && \
+             docker compose up -d && \
+             docker compose wait migrate && \
+             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_migrate)\" = '0' && \
+             docker compose wait extractor && \
+             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_extractor)\" = '0' && \
+             docker compose wait etl && \
+             test \"\$(docker inspect -f '{{.State.ExitCode}}' supply_chain_etl)\" = '0'"

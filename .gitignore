@@ -36,3 +36,11 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+
+# Ansible
+ansible/inventory.ini

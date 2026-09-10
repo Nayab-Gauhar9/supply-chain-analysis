@@ -15,12 +15,16 @@ class StorageError(Exception):
 class ObjectNotFoundError(StorageError):
     pass
 
-s3 = boto3.client(
-    "s3",
-    endpoint_url=MINIO_ENDPOINT,
-    aws_access_key_id=MINIO_ACCESS_KEY,
-    aws_secret_access_key=MINIO_SECRET_KEY,
-)
+s3_config = {}
+
+if MINIO_ENDPOINT:
+    s3_config["endpoint_url"] = MINIO_ENDPOINT
+
+if MINIO_ACCESS_KEY and MINIO_SECRET_KEY:
+    s3_config["aws_access_key_id"] = MINIO_ACCESS_KEY
+    s3_config["aws_secret_access_key"] = MINIO_SECRET_KEY
+
+s3 = boto3.client("s3", **s3_config)
 
 BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME")
 if not BUCKET_NAME:
